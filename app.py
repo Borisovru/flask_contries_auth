@@ -10,11 +10,18 @@ migrate = Migrate(app, db)
 
 # Модели
 class User(db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    contryCode = db.Column(db.String(2), nullable=False)
+    isPublic = db.Column(db.Boolean, nullable=False, default=False)
+    phoneNumber = db.Column(db.String(120), nullable=False)
+    image = db.Column(db.String(120), nullable=False)
 
 class Country(db.Model):
+    __tablename__ = 'country'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     alpha2 = db.Column(db.String(2), unique=True, nullable=False)
@@ -33,7 +40,12 @@ def present_country(country):
 def present_user(user):
     return {
         'username': user.username,
-        'password': user.password
+        'password': user.password,
+        'email': user.email,
+        'contryCode': user.contryCode,
+        'phoneNumber': user.phoneNumber,
+        'image': user.image,
+        'isPublic': user.isPublic,
     }
 
 # Маршрут для получения информации о стране
@@ -62,17 +74,23 @@ def create_user():
 
         username = data.get('username')
         password = data.get('password')
+        email = data.get('email')
+        countryCode = data.get('countryCode')
+        isPublic = data.get('isPublic')
+        phoneNumber = data.get('phoneNumber')
+        image = data.get('image')
+
 
         # Проверка на пустые поля
         if not username or not password:
             return jsonify({'reason': 'Missing password or user name'}), 400
 
         # Проверка на уникальность имени и пароля
-        if User.query.filter_by(username=username).first() is not None or User.query.filter_by(password=password).first() is not None:
-            return jsonify({'reason': 'Username or password already exists'}), 400
+        if User.query.filter_by(username=username).first() is not None or User.query.filter_by(password=password).first() is not None or User.query.filter_by(email=email).first() is not None:
+            return jsonify({'reason': 'Username, password or email already exists'}), 400
 
         # Создание нового пользователя
-        user = User(username=username, password=password)
+        user = User(username=username, password=password, email=email, countryCode=countryCode, isPublic=isPublic, phoneNumber=phoneNumber, image=image)
         db.session.add(user)
         db.session.commit()  # Сохраняем изменения в базе данных
 
